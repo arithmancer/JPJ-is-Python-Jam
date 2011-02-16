@@ -103,8 +103,8 @@ def parse_line(line, block, variable_stack, target_tree, rules):
         elif (length >= 2) and (line[0] == 'return'):
             block.interrupt('return', line.variable_substitutions(variable_stack, 1, length - 1))
         elif (length >= 3) and (line[0] == 'include'):
-            filename = target_tree.include(line.variable_substitutions(variable_stack, 1, length - 1))
-            if filename:
+            (filename, exists) = target_tree.include(line.variable_substitutions(variable_stack, 1, length - 1))
+            if exists:
                 parse(jam.lines.Jamfile(filename), variable_stack, target_tree, rules)
         elif (length >= 3) and (line[0] == 'local'):
             if '=' in line:

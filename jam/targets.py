@@ -24,7 +24,7 @@ class Target:
         self.exists = False
 
     def __bool__(self):
-        return (self.bind_result != [])
+        return (self.bind_result != None)
 
     def depends(self, target):
         if target not in self.dependancy_list:
@@ -59,6 +59,8 @@ class Target:
             exists         = stat.exists(bound_location)
         else:
             search = self.variables.get('SEARCH')
+            if search == None:
+                search = []
             for root in search:
                 jam_path       = jam.path.JamPath(R = root)
                 bound_location = jam_path([location])[0]
@@ -73,53 +75,27 @@ class Target:
     def bind(self, rebuild, variable_stack, rule_dictionary, stat, parent_timestamp, keep, debug_dependancies):
         bind_result = self.bind_result
         if bind_result == None:
-            (location, exists) = self.find(stat)
-            timestamp = None
-            if exists and (not self.no_update):
-                timestamp = stat.timestamp(location)
-
-            location = jam.path.splitgrist(self.key)[1]
             dirty = self.always or rebuild
             timestamp = None
-            if not self.not_file:
-                if stat.exists(location):
+            if self.not_file:
+                location = self.key
+                exists = False
+            else:
+                (location, exists) = self.find(stat)
+                if exists:
                     if not self.no_update:
                         timestamp = stat.timestamp(location)
-                    self.exists = True
                 else:
-                    search = self.variables.get('SEARCH')
-                    locate = self.variables.get('LOCATE')
-                    bound_location = ''
-                    if search:
-                        for root in search:
-                            jam_path = jam.path.JamPath(R = root)
-                            bound_location = jam_path([ location ])[0]
-                            if stat.exists(bound_location):
-                                timestamp = stat.timestamp(bound_location)
-                                dirty = False
-                                self.exists = True
-                                break
-                            bound_location = ''
-                    elif locate:
-                        jam_path = jam.path.JamPath(R = locate[0])
-                        bound_location = jam_path([ location ])[0]
-                        if stat.exists(bound_location):
-                            if not self.no_update:
-                                timestamp = stat.timestamp(bound_location)
-                            self.exists = True
-                        elif self.temporary:
-                            timestamp = parent_timestamp
-                            if timestamp == None:
-                                dirty = True
-                        else:
+                    if self.temporary:
+                        timestamp = parent_timestamp
+                        if timestamp == None:
                             dirty = True
-                    if not bound_location and (not self.no_care):
-                        raise jam.exceptions.JamBindError(self.key)
-                    location = bound_location
+                    elif (self.actions_list) and (not self.no_care):
+                        dirty = True
 
                 hdrscan = self.variables.get('HDRSCAN')
                 hdrrule = self.variables.get('HDRRULE')
-                if location and hdrscan and hdrrule and variable_stack and rule_dictionary:
+                if exists and hdrscan and hdrrule and variable_stack and rule_dictionary:
                     arguments = [[self.key], []]
                     regexs = [re.compile(r) for r in hdrscan]
                     with open(location) as f:
@@ -150,6 +126,7 @@ class Target:
 
             if keep:
                 self.bind_result = bind_result
+                self.exists = exists
                 self.built = not dirty
 
         return bind_result
@@ -196,6 +173,7 @@ class Target:
                         else:
                             text.append(' ')
                 command = ''.join(text)
+                print(command)
                 failed = (subprocess.call(command, shell = True) != 0)
                 variable_stack.close_scope()
             variable_stack.close_scope()
@@ -207,7 +185,6 @@ class Target:
         print(name,self.bind_result)
         if show_variables:
             self.variables.dump(True, [])
-            print()
 
 
 class TargetTree(dict):
@@ -288,8 +265,7 @@ class TargetTree(dict):
     def include(self, name):
         if len(name) > 1:
             raise jam.exceptions.JamSyntaxError
-        triple = self[name[0]].bind(True, None, None, self.stat, None, False, False)
-        return triple[0][0]
+        return self[name[0]].find(self.stat)
 
     def on(self, name):
         if len(name) > 1:
