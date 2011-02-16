@@ -83,8 +83,7 @@ class Target:
             else:
                 (location, exists) = self.find(stat)
                 if exists:
-                    if not self.no_update:
-                        timestamp = stat.timestamp(location)
+                    timestamp = stat.timestamp(location)
                 else:
                     if self.temporary:
                         timestamp = parent_timestamp
@@ -108,16 +107,20 @@ class Target:
                                     rule_dictionary(hdrrule, arguments)
                         variable_stack.close_scope()
 
+            test_timestamp = None
+            if not self.no_update:
+                test_timestamp = timestamp
+
             for depends in self.dependancy_list:
                 if debug_dependancies:
                     print('Depends "'+self.key+'" : "'+depends.key+'"')
                 for triple in depends.bind(rebuild, variable_stack, rule_dictionary, stat, timestamp, keep, debug_dependancies):
-                    if triple[1] or ((timestamp != None) and (triple[2] != None) and (timestamp < triple[2])):
+                    if triple[1] or ((test_timestamp != None) and (triple[2] != None) and (timestamp < triple[2])):
                         print(location, 'is dirty due to', triple[0], triple[1], timestamp, triple[2]) 
                         dirty = True
                         break
 
-            bind_result =[(location, dirty, timestamp)]
+            bind_result =[(location, dirty, test_timestamp)]
 
             for included in self.included_list:
                 if debug_dependancies:
