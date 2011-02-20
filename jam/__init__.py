@@ -95,11 +95,15 @@ def main():
             jam.parse.parse(lines.Jamfile(jambase), variable_stack, target_tree, rule_dictionary)
 
         target_tree.bind(target_map, variable_stack, rule_dictionary, debug['d'])
-        (count, updating) = target_tree.count()
+        (count, updating, updated) = target_tree.count()
         print('...found', count, 'target(s)...')
-        print('...updating', updating, 'target(s)...')
+        if updating:
+            print('...updating', updating, 'target(s)...')
         target_tree.bind({'all': False}, None, None, False)
         target_tree.build(target_map, variable_stack)
+        (count, updating, updated) = target_tree.count()
+        if updated:
+            print('...updated', updated, 'target(s)...')
 
     except jam.exceptions.JamUserExit as jam_exit:
         print(*jam_exit.message)

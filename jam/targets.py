@@ -181,9 +181,9 @@ class Target:
                     print(action[2], *action[1][0])
                 failed = (subprocess.call(command, shell = True) != 0)
                 variable_stack.close_scope()
+                self.updated = True
             variable_stack.close_scope()
             self.built = True
-            self.updated = True
             self.exists = True
 
     def dump(self, name, show_variables):
@@ -205,13 +205,16 @@ class TargetTree(dict):
     def count(self):
         count = 0
         updating = 0
+        updated = 0
         for target in self:
             t = self[target]
             if t:
                 count += 1
                 if (not t.built) and t.actions_list:
                     updating += 1
-        return (count, updating)
+                if t.updated:
+                    updated += 1
+        return (count, updating, updated)
 
     def depends(self, targets, sources):
         for target in targets:
