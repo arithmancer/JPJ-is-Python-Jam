@@ -1,3 +1,26 @@
+"""
+lines.py or 'How I learned to stop worrying and love iterators'
+--------------------------------------------------------------------------------
+Since iterators are supposed to be the heart of python it makes sense that they
+be the heart of pjam. Well maybe not the heart, that's probably the godawful if
+statement in parse.py. Possibly the lungs then or maybe the kidneys...
+
+Every file and every block enclosed by braces gets its own iterator. This is
+probably overkill but it makes closing variable scopes after break or return
+statements easier.
+
+Break, continue and return statements are implemented using the interrupt
+method. In the generic case this performs any necesary tidying and raises an
+exception to be caught outside the loop and used to call the interrupt method
+on the iterator corresponding to the enclosing scope or file. The loop iterators
+respond to calls to this method appropriately. Rules use the Lines iterator and
+handle their local variable scope and the return statement separately (see the
+__call__ method of the Rules object in rules.py).
+
+The context dictionary is currently only used to store if statement condition
+evaluations to aid the parsing of else clauses.
+"""
+
 import fnmatch
 import re
 
@@ -6,7 +29,10 @@ import jam.exceptions
 import jam.token
 
 class Lines:
-    """Base class for tokenised line iterators."""
+    """
+    Base class for tokenised line iterators.
+    Use by Rules in rules.py.
+    """
 
     def __init__(self, lines, tag = 'Lines'):
         self.lines = lines
@@ -33,7 +59,11 @@ class Lines:
         return None
 
 class Jamfile(Lines):
-    """Reads a Jamfile, tokenizes it and organises the tokens into lines."""
+    """
+    Reads a Jamfile, tokenizes it and organises the tokens into lines.
+    It's probably wrong to have all the tokenizing functionality here but I find
+    I care very little.
+    """
 
     def __init__(self, path, tag = 'Jamfile'):
         lines = []
@@ -102,6 +132,11 @@ class Scope(Lines):
         Lines.interrupt(self, name, arguments)
 
 class Switch(Scope):
+    """
+    Iterate only over the lines corresponding to the selected case.
+    TODO: write a replacement for fnmatch which uses jam syntax.
+    """
+
     def __init__(self, value, lines, variable_stack, tag = 'Switch'):
         valid = False
         case = []
@@ -117,7 +152,10 @@ class Switch(Scope):
         Scope.__init__(self, case, variable_stack, tag)
 
 class Loop(Scope):
-    """Base class for tokenised line loop iterators."""
+    """
+    Base class for tokenised line loop iterators.
+    Child classes only need to implement the do_not_restart method.
+    """
 
     def __init__(self, lines, variable_stack, tag = 'Loop'):
         Scope.__init__(self, lines, variable_stack, tag)
