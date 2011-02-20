@@ -38,7 +38,7 @@ class Target:
         for name in names:
             self.variables.set(name, operation, value)
 
-    def actions(self, actions, arguments):
+    def actions(self, name, actions, arguments):
         separate = True
         if actions[1]['together']:
             for a in self.actions_list:
@@ -47,7 +47,7 @@ class Target:
                     separate = False
                     break
         if separate:
-            self.actions_list.append((actions, arguments))
+            self.actions_list.append((actions, arguments, name))
 
     def find(self, stat):
         location = jam.path.splitgrist(self.key)[1]
@@ -176,7 +176,8 @@ class Target:
                         else:
                             text.append(' ')
                 command = ''.join(text)
-                print(command)
+                if not action[0][1]['quietly']:
+                    print(action[2], *action[1][0])
                 failed = (subprocess.call(command, shell = True) != 0)
                 variable_stack.close_scope()
             variable_stack.close_scope()
@@ -249,14 +250,14 @@ class TargetTree(dict):
         for target in targets:
             self[target].set(names, operation, value)
 
-    def actions(self, actions, arguments):
+    def actions(self, name, actions, arguments):
         for target in arguments[0]:
-            self[target].actions(actions, arguments)
+            self[target].actions(name, actions, arguments)
 
     def bind(self, target_map, variable_stack, rule_dictionary, debug_dependancies):
         for target in target_map:
             if target in self:
-                self[target].bind(target_map[target], variable_stack, rule_dictionary, self.stat, None, True, debug_dependancies)
+                self[target].bind(target_map[target], variable_stack, rule_dictionary, self.stat, None, debug_dependancies)
             else:
                 print('don\'t know how to make '+target)
 

@@ -98,7 +98,7 @@ class Rules:
 
          if rule in self.defined_actions:
             unknown_rule = False
-            self.target_tree.actions(self.defined_actions[rule], arguments)
+            self.target_tree.actions(rule, self.defined_actions[rule], arguments)
 
          if rule in self.built_in_rules:
             unknown_rule = False
