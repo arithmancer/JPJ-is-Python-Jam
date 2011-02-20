@@ -70,9 +70,11 @@ class Target:
             else:
                 bound_location = location
                 exists         = stat.exists(bound_location)
+        if (not exists) and (not self.actions_list) and (not self.no_care):
+            print(bound_location+':', 'No such file or directory')
         return (bound_location, exists)
 
-    def bind(self, rebuild, variable_stack, rule_dictionary, stat, parent_timestamp, keep, debug_dependancies):
+    def bind(self, rebuild, variable_stack, rule_dictionary, stat, parent_timestamp, debug_dependancies):
         bind_result = self.bind_result
         if bind_result == None:
             dirty = self.always or rebuild
@@ -114,7 +116,7 @@ class Target:
             for depends in self.dependancy_list:
                 if debug_dependancies:
                     print('Depends "'+self.key+'" : "'+depends.key+'"')
-                for triple in depends.bind(rebuild, variable_stack, rule_dictionary, stat, timestamp, keep, debug_dependancies):
+                for triple in depends.bind(rebuild, variable_stack, rule_dictionary, stat, timestamp, debug_dependancies):
                     if triple[1] or ((test_timestamp != None) and (triple[2] != None) and (timestamp < triple[2])):
                         print(location, 'is dirty due to', triple[0], triple[1], timestamp, triple[2]) 
                         dirty = True
@@ -125,12 +127,11 @@ class Target:
             for included in self.included_list:
                 if debug_dependancies:
                     print('Includes "'+self.key+'" : "'+included.key+'"')
-                bind_result.extend(included.bind(rebuild, variable_stack, rule_dictionary, stat, None, keep, debug_dependancies))
+                bind_result.extend(included.bind(rebuild, variable_stack, rule_dictionary, stat, None, debug_dependancies))
 
-            if keep:
-                self.bind_result = bind_result
-                self.exists = exists
-                self.built = not dirty
+            self.bind_result = bind_result
+            self.exists = exists
+            self.built = not dirty
 
         return bind_result
 
