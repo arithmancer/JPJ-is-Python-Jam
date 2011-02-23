@@ -72,6 +72,8 @@ class VariableStack:
 
         variables.set('JAMDATE', '=', [ time.strftime('%a %b %d %H:%M:%S %Y', time.gmtime()) ])
         variables.set('JAMVERSION', '=', [ '2.5.2' ])
+        variables.set('JPJ', '=', ['true'])
+        variables.set('JPJVERSION', '=', ['0.1.0'])
 
         for name in os.environ:
             if name[-4:] == 'PATH':
