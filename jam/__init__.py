@@ -80,7 +80,7 @@ def main():
             debug_options['actions']   = True
 
         if options['v']:
-            raise exceptions.JamUserExit('PJam - based on FT-Jam 2.5.2.')
+            raise exceptions.JamUserExit('JPJ: JPJ is Python Jam - based on FT-Jam 2.5.2.')
         if options['h']:
             raise exceptions.JamUserExit('\n'
                                          'usage: jam [ options ] targets...\n\n'
