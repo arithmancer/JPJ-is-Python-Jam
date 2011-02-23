@@ -144,10 +144,6 @@ def main():
 
     except jam.exceptions.JamUserExit as jam_exit:
         print(*jam_exit.message)
-    except jam.exceptions.JamUnknownRule as jam_rule:
-        print('Unknown Rule:', jam_rule.name)
-    except jam.exceptions.JamBindError as bind_error:
-        print('Bind Error:', bind_error.target)
     except Exception as exception:
         variable_stack.dump([])
         raise exception
