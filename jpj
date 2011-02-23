@@ -1,5 +1,7 @@
 #! /usr/bin/env python3
 
+# JPJ is Python Jam
+
 if __name__ == "__main__":
    import jam
    jam.main()
