@@ -135,12 +135,12 @@ class Target:
 
         return bind_result
 
-    def build(self, variable_stack, target_tree):
+    def build(self, variable_stack, target_tree, output_file, debug_options):
         if not self.built:
             for depends in self.dependancy_list:
-                depends.build(variable_stack, target_tree)
+                depends.build(variable_stack, target_tree, output_file, debug_options)
             for included in self.included_list:
-                included.build(variable_stack, target_tree)
+                included.build(variable_stack, target_tree, output_file, debug_options)
             variable_stack.open_scope('build', self.variables)
             for action in self.actions_list:
                 variable_stack.open_scope(self.key)
@@ -177,9 +177,15 @@ class Target:
                         else:
                             text.append(' ')
                 command = ''.join(text)
-                if not action[0][1]['quietly']:
+                if (debug_options['actions'] and (not action[0][1]['quietly'])) or (debug_options['quiet'] and action[0][1]['quietly']):
                     print(action[2], *action[1][0])
-                failed = (subprocess.call(command, shell = True) != 0)
+                if debug_options['shell']:
+                    print(command)
+                failed = False
+                if output_file:
+                    output_file.write(command)
+                elif not debug_options['noupdate']:
+                    failed = (subprocess.call(command, shell = True) != 0)
                 variable_stack.close_scope()
                 self.updated = True
             variable_stack.close_scope()
@@ -265,10 +271,10 @@ class TargetTree(dict):
             else:
                 print('don\'t know how to make '+target)
 
-    def build(self, target_map, variable_stack):
+    def build(self, target_map, variable_stack, output_file, debug_options):
         for target in target_map:
             if target in self:
-                self[target].build(variable_stack, self)
+                self[target].build(variable_stack, self, output_file, debug_options)
 
     def include(self, name):
         if len(name) > 1:

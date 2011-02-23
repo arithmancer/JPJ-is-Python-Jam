@@ -8,7 +8,7 @@ import jam.path
 import jam.token
 
 class Rules:
-    def __init__(self, target_tree, variable_stack, debug_rules):
+    def __init__(self, target_tree, variable_stack, debug_options):
         built_in_rules = {}
         built_in_rules['Depends']   = built_in_rules['DEPENDS']   = (2, target_tree.depends)
         built_in_rules['Includes']  = built_in_rules['INCLUDES']  = (2, target_tree.includes)
@@ -22,7 +22,7 @@ class Rules:
         built_in_rules['Exit'] = built_in_rules['EXIT'] = built_in_rules['exit'] = (1, self.exit)
         built_in_rules['Glob'] = built_in_rules['GLOB'] = (2, self.glob)
         built_in_rules['Match'] = built_in_rules['MATCH'] = (2, self.match)
-        if debug_rules:
+        if debug_options['pjam']:
             built_in_rules['PDumpVariables'] = (1, variable_stack.dump)
             built_in_rules['PDumpTargets'] = (0, target_tree.dump)
         self.built_in_rules = built_in_rules

@@ -46,12 +46,38 @@ def main():
     if not target_map:
         target_map['all'] = False
     try:
-        debug = {'a': False, 'c': False, 'd': False, 'm': False, 'p': False, 'x': False}
+        debug = []
         for d in ''.join(parameters['d']):
-            if d in debug:
-                debug[d] = True
+            if d in ('a', 'c', 'd', 'm', 'p', 'x'):
+                debug.append(d)
             else:
                 print('Invalid debug flag \''+d+'\'.')
+
+        debug_options = {'summary'      : False,
+                         'actions'      : False,
+                         'quiet'        : False,
+                         'temporary'    : False,
+                         'shell'        : False,
+                         'pjam'         : False,
+                         'noupdate'     : False}
+
+        if options['n']:
+            debug_options['noupdate'] = True
+            debug.extend(['a','x'])
+
+        if debug:
+            if 'a' in debug:
+                debug_options['summary']      = True
+                debug_options['actions']      = True
+                debug_options['quiet']        = True
+                debug_options['temporary']    = True
+            if 'p' in debug:
+                debug_options['pjam']         = True
+            if 'x' in debug:
+                debug_options['shell']        = True
+        else:
+            debug_options['summary']   = True
+            debug_options['actions']   = True
 
         if options['v']:
             raise exceptions.JamUserExit('PJam - based on FT-Jam 2.5.2.')
@@ -89,21 +115,32 @@ def main():
             parameters['f'].append(jambase)
 
         target_tree = jam.targets.TargetTree()
-        rule_dictionary = jam.rules.Rules(target_tree, variable_stack, debug['p'])
+        rule_dictionary = jam.rules.Rules(target_tree, variable_stack, debug_options)
 
         for jambase in parameters['f']:
             jam.parse.parse(lines.Jamfile(jambase), variable_stack, target_tree, rule_dictionary)
 
-        target_tree.bind(target_map, variable_stack, rule_dictionary, debug['d'])
-        (count, updating, updated) = target_tree.count()
-        print('...found', count, 'target(s)...')
-        if updating:
-            print('...updating', updating, 'target(s)...')
+        target_tree.bind(target_map, variable_stack, rule_dictionary, ('d' in debug))
+
+        if debug_options['summary']:
+            (count, updating, updated) = target_tree.count()
+            print('...found', count, 'target(s)...')
+            if updating:
+                print('...updating', updating, 'target(s)...')
+
         target_tree.bind({'all': False}, None, None, False)
-        target_tree.build(target_map, variable_stack)
-        (count, updating, updated) = target_tree.count()
-        if updated:
-            print('...updated', updated, 'target(s)...')
+
+        output_file = None
+        if parameters['o']:
+            output_file = open(parameters['o'][0], mode='w', encoding='utf-8')
+        target_tree.build(target_map, variable_stack, output_file, debug_options)
+        if output_file:
+            output_file.close()
+
+        if debug_options['summary']:
+            (count, updating, updated) = target_tree.count()
+            if updated:
+                print('...updated', updated, 'target(s)...')
 
     except jam.exceptions.JamUserExit as jam_exit:
         print(*jam_exit.message)
