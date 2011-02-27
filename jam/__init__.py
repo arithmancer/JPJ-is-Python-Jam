@@ -122,11 +122,13 @@ def main():
 
         target_tree.bind(target_map, variable_stack, rule_dictionary, ('d' in debug))
 
+        (count, updating, temporary, newer) = target_tree.count()
         if debug_options['summary']:
-            (count, updating, updated) = target_tree.count()
             print('...found', count, 'target(s)...')
-            if updating:
-                print('...updating', updating, 'target(s)...')
+        if debug_options['temporary'] and temporary:
+            print('...using', temporary, 'temp target(s)...')
+        if debug_options['summary'] and updating:
+            print('...updating', updating, 'target(s)...')
 
         target_tree.bind({'all': False}, None, None, False)
 
@@ -137,10 +139,10 @@ def main():
         if output_file:
             output_file.close()
 
-        if debug_options['summary']:
-            (count, updating, updated) = target_tree.count()
-            if updated:
-                print('...updated', updated, 'target(s)...')
+        (count, updating, temporary, updated) = target_tree.count()
+        updated -= newer
+        if debug_options['summary'] and updated:
+            print('...updated', updated, 'target(s)...')
 
     except jam.exceptions.JamUserExit as jam_exit:
         print(*jam_exit.message)

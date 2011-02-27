@@ -127,11 +127,14 @@ class Target:
             for included in self.included_list:
                 if debug_dependancies:
                     print('Includes "'+self.key+'" : "'+included.key+'"')
-                bind_result.extend(included.bind(rebuild, variable_stack, rule_dictionary, stat, None, debug_dependancies))
+                bind_result.extend(included.bind(rebuild, variable_stack, rule_dictionary, stat, timestamp, debug_dependancies))
 
             self.bind_result = bind_result
             self.exists = exists
             self.built = not dirty
+
+        if (parent_timestamp != None) and (bind_result[0][2] != None) and (parent_timestamp < bind_result[0][2]):
+            self.updated = True
 
         return bind_result
 
@@ -211,6 +214,7 @@ class TargetTree(dict):
     def count(self):
         count = 0
         updating = 0
+        temporary = 0
         updated = 0
         for target in self:
             t = self[target]
@@ -218,9 +222,11 @@ class TargetTree(dict):
                 count += 1
                 if (not t.built) and t.actions_list:
                     updating += 1
+                if t.exists and t.temporary:
+                    temporary += 1
                 if t.updated:
                     updated += 1
-        return (count, updating, updated)
+        return (count, updating, temporary, updated)
 
     def depends(self, targets, sources):
         for target in targets:
