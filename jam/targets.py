@@ -72,7 +72,7 @@ class Target:
             else:
                 bound_location = location
                 exists         = stat.exists(bound_location)
-        if (not exists) and (not self.actions_list) and (not self.no_care):
+        if (not exists) and (not self.actions_list) and (not self.no_care) and (not jam.path.splitmodule(bound_location)[1]):
             print(bound_location+':', 'No such file or directory')
         return (bound_location, exists)
 
