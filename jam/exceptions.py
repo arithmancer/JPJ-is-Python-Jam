@@ -1,3 +1,9 @@
+"""
+exceptions.py
+--------------------------------------------------------------------------------
+I'm not sure why the exceptions have their own file. They're just antisocial I
+guess. 
+"""
 
 class JamSyntaxError(Exception):
     def __init__(self, *arguments):
@@ -10,6 +16,9 @@ class JamOptionError(Exception):
 class JamUserExit(Exception):
     def __init__(self, *message):
         self.message = message
+
+class JamQuickExit(Exception):
+    pass
 
 class JamInterrupt(Exception):
     def __init__(self, name, arguments):

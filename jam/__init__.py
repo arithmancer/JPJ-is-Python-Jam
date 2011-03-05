@@ -59,7 +59,8 @@ def main():
                          'temporary'    : False,
                          'shell'        : False,
                          'pjam'         : False,
-                         'noupdate'     : False}
+                         'noupdate'     : False,
+                         'quick'        : False}
 
         if options['n']:
             debug_options['noupdate'] = True
@@ -78,6 +79,9 @@ def main():
         else:
             debug_options['summary']   = True
             debug_options['actions']   = True
+
+        if options['q']:
+            debug_options['quick'] = True
 
         if options['v']:
             raise exceptions.JamUserExit('JPJ: JPJ is Python Jam - based on FT-Jam 2.5.2.')
@@ -122,7 +126,7 @@ def main():
 
         target_tree.bind(target_map, variable_stack, rule_dictionary, ('d' in debug))
 
-        (count, updating, temporary, newer) = target_tree.count()
+        (count, updating, temporary, newer, failed) = target_tree.count()
         if debug_options['summary']:
             print('...found', count, 'target(s)...')
         if debug_options['temporary'] and temporary:
@@ -139,13 +143,20 @@ def main():
         if output_file:
             output_file.close()
 
-        (count, updating, temporary, updated) = target_tree.count()
+        (count, skipped, temporary, updated, failed) = target_tree.count()
         updated -= newer
-        if debug_options['summary'] and updated:
-            print('...updated', updated, 'target(s)...')
+        if debug_options['summary']:
+            if failed:
+                print('...failed updating', failed, 'target(s)...')
+            if skipped:
+                print('...skipped', skipped, 'target(s)...')
+            if updated:
+                print('...updated', updated, 'target(s)...')
 
     except jam.exceptions.JamUserExit as jam_exit:
         print(*jam_exit.message)
+    except jam.exceptions.JamQuickExit:
+        pass
     except Exception as exception:
         variable_stack.dump([])
         raise exception

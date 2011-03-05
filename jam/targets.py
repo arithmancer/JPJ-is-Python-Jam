@@ -20,8 +20,10 @@ class Target:
         self.temporary = False
         self.bind_result = None
         self.built = False
+        self.attempted = False
         self.updated = False
         self.exists = False
+        self.failed = False
 
     def __bool__(self):
         return (self.bind_result != None)
@@ -118,7 +120,7 @@ class Target:
                     print('Depends "'+self.key+'" : "'+depends.key+'"')
                 for triple in depends.bind(rebuild, variable_stack, rule_dictionary, stat, timestamp, debug_dependancies):
                     if triple[1] or ((test_timestamp != None) and (triple[2] != None) and (timestamp < triple[2])):
-                        print(location, 'is dirty due to', triple[0], triple[1], timestamp, triple[2]) 
+                        #print(location, 'is dirty due to', triple[0], triple[1], timestamp, triple[2]) 
                         dirty = True
                         break
 
@@ -139,11 +141,18 @@ class Target:
         return bind_result
 
     def build(self, variable_stack, target_tree, output_file, debug_options):
-        if not self.built:
+        if (not self.built) and (not self.attempted):
+            self.attempted = True
+            failed = False
             for depends in self.dependancy_list:
-                depends.build(variable_stack, target_tree, output_file, debug_options)
+                if not depends.build(variable_stack, target_tree, output_file, debug_options):
+                    failed = True
+                    if self.actions_list:
+                        print('...skipped', self.bind_result[0][0], 'for lack of', depends.bind_result[0][0])
             for included in self.included_list:
                 included.build(variable_stack, target_tree, output_file, debug_options)
+            if failed:
+                return False
             variable_stack.open_scope('build', self.variables)
             for action in self.actions_list:
                 variable_stack.open_scope(self.key)
@@ -184,16 +193,27 @@ class Target:
                     print(action[2], *action[1][0])
                 if debug_options['shell']:
                     print(command)
-                failed = False
                 if output_file:
                     output_file.write(command)
                 elif not debug_options['noupdate']:
                     failed = (subprocess.call(command, shell = True) != 0)
+                    if failed and debug_options['quick']:
+                        raise jam.exceptions.JamQuickExit
                 variable_stack.close_scope()
-                self.updated = True
+                if failed:
+                    print('\n', command)
+                    print('...failed', action[2], *action[1][0])
+                    break
+                else:
+                    self.updated = True
             variable_stack.close_scope()
-            self.built = True
-            self.exists = True
+            if failed:
+                self.failed = True
+            else:
+                self.built = True
+                self.exists = True
+
+        return self.built
 
     def dump(self, name, show_variables):
         print(name,self.bind_result)
@@ -216,17 +236,20 @@ class TargetTree(dict):
         updating = 0
         temporary = 0
         updated = 0
+        failed = 0
         for target in self:
             t = self[target]
             if t:
                 count += 1
-                if (not t.built) and t.actions_list:
+                if t.failed:
+                    failed += 1
+                elif (not t.built) and t.actions_list:
                     updating += 1
                 if t.exists and t.temporary:
                     temporary += 1
                 if t.updated:
                     updated += 1
-        return (count, updating, temporary, updated)
+        return (count, updating, temporary, updated, failed)
 
     def depends(self, targets, sources):
         for target in targets:
