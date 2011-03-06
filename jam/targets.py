@@ -19,6 +19,7 @@ class Target:
         self.no_update = False
         self.temporary = False
         self.bind_result = None
+        self.binding = False
         self.built = False
         self.attempted = False
         self.updated = False
@@ -77,8 +78,12 @@ class Target:
         return (bound_location, exists)
 
     def bind(self, rebuild, variable_stack, rule_dictionary, stat, parent_timestamp, debug_dependancies):
+        if self.binding:
+            print('warning:', self.key, 'depends on itself')
+            return []
         bind_result = self.bind_result
         if bind_result == None:
+            self.binding = True
             dirty = self.always or rebuild
             timestamp = None
             if self.not_file:
@@ -132,6 +137,7 @@ class Target:
                 bind_result.extend(included.bind(rebuild, variable_stack, rule_dictionary, stat, timestamp, debug_dependancies))
 
             self.bind_result = bind_result
+            self.binding = False
             self.exists = exists
             self.built = not dirty
 
