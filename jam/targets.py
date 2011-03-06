@@ -135,8 +135,10 @@ class Target:
             self.exists = exists
             self.built = not dirty
 
-        if (parent_timestamp != None) and (bind_result[0][2] != None) and (parent_timestamp < bind_result[0][2]):
-            self.updated = True
+        if parent_timestamp != None:
+            for triple in bind_result:
+                if (triple[2] != None) and (parent_timestamp < triple[2]):
+                    self.updated = True
 
         return bind_result
 
