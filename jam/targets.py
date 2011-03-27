@@ -77,7 +77,7 @@ class Target:
             print(bound_location+':', 'No such file or directory')
         return (bound_location, exists)
 
-    def bind(self, rebuild, variable_stack, rule_dictionary, stat, parent_timestamp, debug_dependancies):
+    def bind(self, rebuild, variable_stack, rule_dictionary, stat, parent_timestamp, debug_options):
         if self.binding:
             print('warning:', self.key, 'depends on itself')
             return []
@@ -121,9 +121,9 @@ class Target:
                 test_timestamp = timestamp
 
             for depends in self.dependancy_list:
-                if debug_dependancies:
+                if debug_options['dependancies']:
                     print('Depends "'+self.key+'" : "'+depends.key+'"')
-                for triple in depends.bind(rebuild, variable_stack, rule_dictionary, stat, timestamp, debug_dependancies):
+                for triple in depends.bind(rebuild, variable_stack, rule_dictionary, stat, timestamp, debug_options):
                     if triple[1] or ((test_timestamp != None) and (triple[2] != None) and (timestamp < triple[2])):
                         #print(location, 'is dirty due to', triple[0], triple[1], timestamp, triple[2]) 
                         dirty = True
@@ -132,9 +132,9 @@ class Target:
             bind_result =[(location, dirty, test_timestamp)]
 
             for included in self.included_list:
-                if debug_dependancies:
+                if debug_options['dependancies']:
                     print('Includes "'+self.key+'" : "'+included.key+'"')
-                bind_result.extend(included.bind(rebuild, variable_stack, rule_dictionary, stat, timestamp, debug_dependancies))
+                bind_result.extend(included.bind(rebuild, variable_stack, rule_dictionary, stat, timestamp, debug_options))
 
             self.bind_result = bind_result
             self.binding = False
@@ -301,10 +301,10 @@ class TargetTree(dict):
         for target in arguments[0]:
             self[target].actions(name, actions, arguments)
 
-    def bind(self, target_map, variable_stack, rule_dictionary, debug_dependancies):
+    def bind(self, target_map, variable_stack, rule_dictionary, debug_options):
         for target in target_map:
             if target in self:
-                self[target].bind(target_map[target], variable_stack, rule_dictionary, self.stat, None, debug_dependancies)
+                self[target].bind(target_map[target], variable_stack, rule_dictionary, self.stat, None, debug_options)
             else:
                 print('don\'t know how to make '+target)
 

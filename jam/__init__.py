@@ -58,6 +58,7 @@ def main():
                          'quiet'        : False,
                          'temporary'    : False,
                          'shell'        : False,
+                         'dependancies' : False,
                          'pjam'         : False,
                          'noupdate'     : False,
                          'quick'        : False}
@@ -72,6 +73,8 @@ def main():
                 debug_options['actions']      = True
                 debug_options['quiet']        = True
                 debug_options['temporary']    = True
+            if 'd' in debug:
+                debug_options['dependancies'] = True
             if 'p' in debug:
                 debug_options['pjam']         = True
             if 'x' in debug:
@@ -124,7 +127,7 @@ def main():
         for jambase in parameters['f']:
             jam.parse.parse(lines.Jamfile(jambase), variable_stack, target_tree, rule_dictionary)
 
-        target_tree.bind(target_map, variable_stack, rule_dictionary, ('d' in debug))
+        target_tree.bind(target_map, variable_stack, rule_dictionary, debug_options)
 
         (count, updating, temporary, newer, failed) = target_tree.count()
         if debug_options['summary']:
@@ -134,7 +137,8 @@ def main():
         if debug_options['summary'] and updating:
             print('...updating', updating, 'target(s)...')
 
-        target_tree.bind({'all': False}, None, None, False)
+        debug_options['dependancies'] = False
+        target_tree.bind({'all': False}, None, None, debug_options)
 
         output_file = None
         if parameters['o']:
