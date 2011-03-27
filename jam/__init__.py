@@ -59,6 +59,7 @@ def main():
                          'temporary'    : False,
                          'shell'        : False,
                          'dependancies' : False,
+                         'make tree'    : False,
                          'pjam'         : False,
                          'noupdate'     : False,
                          'quick'        : False}
@@ -75,6 +76,8 @@ def main():
                 debug_options['temporary']    = True
             if 'd' in debug:
                 debug_options['dependancies'] = True
+            if 'm' in debug:
+                debug_options['make tree']    = True
             if 'p' in debug:
                 debug_options['pjam']         = True
             if 'x' in debug:
@@ -138,6 +141,7 @@ def main():
             print('...updating', updating, 'target(s)...')
 
         debug_options['dependancies'] = False
+        debug_options['make tree']    = False
         target_tree.bind({'all': False}, None, None, debug_options)
 
         output_file = None

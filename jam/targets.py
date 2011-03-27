@@ -1,5 +1,6 @@
 import re
 import subprocess
+import time
 
 import jam.exceptions
 import jam.path
@@ -77,12 +78,15 @@ class Target:
             print(bound_location+':', 'No such file or directory')
         return (bound_location, exists)
 
-    def bind(self, rebuild, variable_stack, rule_dictionary, stat, parent_timestamp, debug_options):
+
+    def bind(self, rebuild, variable_stack, rule_dictionary, stat, parent_timestamp, debug_options, level):
         if self.binding:
             print('warning:', self.key, 'depends on itself')
             return []
         bind_result = self.bind_result
         if bind_result == None:
+            if debug_options['make tree']:
+                print('make\t--\t', ' '*level, self.key)
             self.binding = True
             dirty = self.always or rebuild
             timestamp = None
@@ -100,6 +104,15 @@ class Target:
                             dirty = True
                     elif (self.actions_list) and (not self.no_care):
                         dirty = True
+
+                if debug_options['make tree']:
+                    if location != self.key:
+                        print('bind\t--\t', ' '*level, self.key, ':', location)
+                    if timestamp:
+                        if exists:
+                            print('time\t--\t', ' '*level, self.key, ':', time.strftime('%a %b %d %H:%M:%S %Y', time.gmtime(timestamp)))
+                        else:
+                            print('time\t--\t', ' '*level, self.key, ':', 'parents')
 
                 hdrscan = self.variables.get('HDRSCAN')
                 hdrrule = self.variables.get('HDRRULE')
@@ -123,7 +136,7 @@ class Target:
             for depends in self.dependancy_list:
                 if debug_options['dependancies']:
                     print('Depends "'+self.key+'" : "'+depends.key+'"')
-                for triple in depends.bind(rebuild, variable_stack, rule_dictionary, stat, timestamp, debug_options):
+                for triple in depends.bind(rebuild, variable_stack, rule_dictionary, stat, timestamp, debug_options, level + 1):
                     if triple[1] or ((test_timestamp != None) and (triple[2] != None) and (timestamp < triple[2])):
                         #print(location, 'is dirty due to', triple[0], triple[1], timestamp, triple[2]) 
                         dirty = True
@@ -134,12 +147,20 @@ class Target:
             for included in self.included_list:
                 if debug_options['dependancies']:
                     print('Includes "'+self.key+'" : "'+included.key+'"')
-                bind_result.extend(included.bind(rebuild, variable_stack, rule_dictionary, stat, timestamp, debug_options))
+                bind_result.extend(included.bind(rebuild, variable_stack, rule_dictionary, stat, parent_timestamp, debug_options, level + 1))
 
             self.bind_result = bind_result
             self.binding = False
             self.exists = exists
             self.built = not dirty
+
+            if debug_options['make tree']:
+                flag = ' '
+                if (not self.not_file) and dirty:
+                    flag = '+'
+                elif exists and (parent_timestamp != None) and (test_timestamp != None) and (parent_timestamp < test_timestamp):
+                    flag = '*'
+                print('made'+flag+'\t--\t', ' '*level, self.key)
 
         if parent_timestamp != None:
             for triple in bind_result:
@@ -304,7 +325,7 @@ class TargetTree(dict):
     def bind(self, target_map, variable_stack, rule_dictionary, debug_options):
         for target in target_map:
             if target in self:
-                self[target].bind(target_map[target], variable_stack, rule_dictionary, self.stat, None, debug_options)
+                self[target].bind(target_map[target], variable_stack, rule_dictionary, self.stat, None, debug_options, 0)
             else:
                 print('don\'t know how to make '+target)
 
