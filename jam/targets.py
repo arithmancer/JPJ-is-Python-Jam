@@ -133,12 +133,16 @@ class Target:
             if not self.no_update:
                 test_timestamp = timestamp
 
+            newer = []
             for depends in self.dependancy_list:
                 if debug_options['dependancies']:
                     print('Depends "'+self.key+'" : "'+depends.key+'"')
                 for triple in depends.bind(rebuild, variable_stack, rule_dictionary, stat, timestamp, debug_options, level + 1):
                     if triple[1] or ((test_timestamp != None) and (triple[2] != None) and (timestamp < triple[2])):
-                        #print(location, 'is dirty due to', triple[0], triple[1], timestamp, triple[2]) 
+                        if triple[1]:
+                            newer.append(triple[0]+'*')
+                        else:
+                            newer.append(triple[0])
                         dirty = True
                         break
 
@@ -161,6 +165,19 @@ class Target:
                 elif exists and (parent_timestamp != None) and (test_timestamp != None) and (parent_timestamp < test_timestamp):
                     flag = '*'
                 print('made'+flag+'\t--\t', ' '*level, self.key)
+
+            if (not self.not_file) and dirty and debug_options['causes']:
+                cause = ''
+                if timestamp == None:
+                    # (timestamp == None) rather than (not exists) so that temporary targets aren't reported as missing
+                    cause = 'was missing'
+                elif rebuild:
+                    cause = 'was touched'
+                elif self.always:
+                    cause = 'is always rebuilt'
+                else:
+                    cause = 'was older than ' + ', '.join(newer)
+                print(self.key, cause)
 
         if parent_timestamp != None:
             for triple in bind_result:

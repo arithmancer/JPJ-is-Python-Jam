@@ -58,6 +58,7 @@ def main():
                          'quiet'        : False,
                          'temporary'    : False,
                          'shell'        : False,
+                         'causes'       : False,
                          'dependancies' : False,
                          'make tree'    : False,
                          'pjam'         : False,
@@ -74,6 +75,8 @@ def main():
                 debug_options['actions']      = True
                 debug_options['quiet']        = True
                 debug_options['temporary']    = True
+            if 'c' in debug:
+                debug_options['causes'] = True
             if 'd' in debug:
                 debug_options['dependancies'] = True
             if 'm' in debug:
@@ -140,6 +143,7 @@ def main():
         if debug_options['summary'] and updating:
             print('...updating', updating, 'target(s)...')
 
+        debug_options['causes']       = False
         debug_options['dependancies'] = False
         debug_options['make tree']    = False
         target_tree.bind({'all': False}, None, None, debug_options)
