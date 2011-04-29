@@ -6,6 +6,16 @@ import jam.exceptions
 import jam.path
 import jam.variables
 
+class BuildTarget:
+    def __init__(self, location, dirty, timestamp):
+        self.location        = location
+        self.dirty           = dirty
+        self.timestamp       = timestamp
+        self.dependancy_list = []
+
+    def extend(self, dependancy_list):
+        self.dependancy_list.extend(dependancy_list)
+
 class Target:
     def __init__(self, key):
         self.key = key
@@ -137,16 +147,16 @@ class Target:
             for depends in self.dependancy_list:
                 if debug_options['dependancies']:
                     print('Depends "'+self.key+'" : "'+depends.key+'"')
-                for triple in depends.bind(rebuild, variable_stack, rule_dictionary, stat, timestamp, debug_options, level + 1):
-                    if triple[1] or ((test_timestamp != None) and (triple[2] != None) and (timestamp < triple[2])):
-                        if triple[1]:
-                            newer.append(triple[0]+'*')
+                for target in depends.bind(rebuild, variable_stack, rule_dictionary, stat, timestamp, debug_options, level + 1):
+                    if target.dirty or ((test_timestamp != None) and (target.timestamp != None) and (timestamp < target.timestamp)):
+                        if target.dirty:
+                            newer.append(target.location+'*')
                         else:
-                            newer.append(triple[0])
+                            newer.append(target.location)
                         dirty = True
                         break
 
-            bind_result =[(location, dirty, test_timestamp)]
+            bind_result =[BuildTarget(location, dirty, test_timestamp)]
 
             for included in self.included_list:
                 if debug_options['dependancies']:
@@ -180,8 +190,8 @@ class Target:
                 print(self.key, cause)
 
         if parent_timestamp != None:
-            for triple in bind_result:
-                if (triple[2] != None) and (parent_timestamp < triple[2]):
+            for target in bind_result:
+                if (target.timestamp != None) and (parent_timestamp < target.timestamp):
                     self.updated = True
 
         return bind_result
@@ -194,7 +204,7 @@ class Target:
                 if not depends.build(variable_stack, target_tree, output_file, debug_options):
                     failed = True
                     if self.actions_list:
-                        print('...skipped', self.bind_result[0][0], 'for lack of', depends.bind_result[0][0])
+                        print('...skipped', self.bind_result[0].location, 'for lack of', depends.bind_result[0].location)
             for included in self.included_list:
                 included.build(variable_stack, target_tree, output_file, debug_options)
             if failed:
@@ -210,22 +220,22 @@ class Target:
                         for a in arguments[1]:
                             t = target_tree[a]
                             if t.updated:
-                                value.append(t.bind_result[0][0])
+                                value.append(t.bind_result[0].location)
                         variable_stack.add_local(variable, value)
                     elif (i == 1) and action[0][1]['existing']:
                         value = []
                         for a in arguments[1]:
                             t = target_tree[a]
                             if t.exists:
-                                value.append(t.bind_result[0][0])
+                                value.append(t.bind_result[0].location)
                         variable_stack.add_local(variable, value)
                     elif i < 2:
-                        variable_stack.add_local(variable, [target_tree[a].bind_result[0][0] for a in arguments[i]])
+                        variable_stack.add_local(variable, [target_tree[a].bind_result[0].location for a in arguments[i]])
                     else:
                         variable_stack.add_local(variable, arguments[i])
                 bound = action[0][0]
                 for b in bound:
-                    variable_stack.add_local([b], [target_tree[a].bind_result[0][0] for a in variable_stack.get(b)])
+                    variable_stack.add_local([b], [target_tree[a].bind_result[0].location for a in variable_stack.get(b)])
                 text = []
                 for t in action[0][2].variable_substitutions(variable_stack):
                     if t:
