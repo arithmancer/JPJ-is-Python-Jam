@@ -144,19 +144,25 @@ class Target:
                 test_timestamp = timestamp
 
             newer = []
+            build_depends = []
             for depends in self.dependancy_list:
                 if debug_options['dependancies']:
                     print('Depends "'+self.key+'" : "'+depends.key+'"')
-                for target in depends.bind(rebuild, variable_stack, rule_dictionary, stat, timestamp, debug_options, level + 1):
-                    if target.dirty or ((test_timestamp != None) and (target.timestamp != None) and (timestamp < target.timestamp)):
-                        if target.dirty:
-                            newer.append(target.location+'*')
-                        else:
-                            newer.append(target.location)
-                        dirty = True
-                        break
+                build_depends.extend(depends.bind(rebuild, variable_stack, rule_dictionary, stat, timestamp, debug_options, level + 1))
 
-            bind_result =[BuildTarget(location, dirty, test_timestamp)]
+            for target in build_depends:
+                if target.dirty or ((test_timestamp != None) and (target.timestamp != None) and (timestamp < target.timestamp)):
+                    if target.dirty:
+                        newer.append(target.location+'*')
+                    else:
+                        newer.append(target.location)
+                    dirty = True
+                    break
+
+            build_target = BuildTarget(location, dirty, test_timestamp)
+            build_target.extend(build_depends)
+
+            bind_result = [build_target]
 
             for included in self.included_list:
                 if debug_options['dependancies']:
