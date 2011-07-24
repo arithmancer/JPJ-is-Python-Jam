@@ -6,16 +6,6 @@ import jam.exceptions
 import jam.path
 import jam.variables
 
-class BuildTarget:
-    def __init__(self, location, dirty, timestamp):
-        self.location        = location
-        self.dirty           = dirty
-        self.timestamp       = timestamp
-        self.dependancy_list = []
-
-    def extend(self, dependancy_list):
-        self.dependancy_list.extend(dependancy_list)
-
 class Target:
     def __init__(self, key):
         self.key = key
@@ -29,7 +19,10 @@ class Target:
         self.not_file = False
         self.no_update = False
         self.temporary = False
+        self.location = None
+        self.timestamp = None
         self.bind_result = None
+        self.build_dependancy_list =[]
         self.binding = False
         self.built = False
         self.attempted = False
@@ -151,25 +144,25 @@ class Target:
                 build_depends.extend(depends.bind(rebuild, variable_stack, rule_dictionary, stat, timestamp, debug_options, level + 1))
 
             for target in build_depends:
-                if target.dirty or ((test_timestamp != None) and (target.timestamp != None) and (timestamp < target.timestamp)):
-                    if target.dirty:
+                if (not target.built) or ((test_timestamp != None) and (target.timestamp != None) and (timestamp < target.timestamp)):
+                    if not target.built:
                         newer.append(target.location+'*')
                     else:
                         newer.append(target.location)
                     dirty = True
                     break
 
-            build_target = BuildTarget(location, dirty, test_timestamp)
-            build_target.extend(build_depends)
-
-            bind_result = [build_target]
+            bind_result = [self]
 
             for included in self.included_list:
                 if debug_options['dependancies']:
                     print('Includes "'+self.key+'" : "'+included.key+'"')
                 bind_result.extend(included.bind(rebuild, variable_stack, rule_dictionary, stat, parent_timestamp, debug_options, level + 1))
 
+            self.location = location
+            self.timestamp = test_timestamp
             self.bind_result = bind_result
+            self.build_dependancy_list = build_depends
             self.binding = False
             self.exists = exists
             self.built = not dirty
@@ -206,13 +199,11 @@ class Target:
         if (not self.built) and (not self.attempted):
             self.attempted = True
             failed = False
-            for depends in self.dependancy_list:
+            for depends in self.build_dependancy_list:
                 if not depends.build(variable_stack, target_tree, output_file, debug_options):
                     failed = True
                     if self.actions_list:
                         print('...skipped', self.bind_result[0].location, 'for lack of', depends.bind_result[0].location)
-            for included in self.included_list:
-                included.build(variable_stack, target_tree, output_file, debug_options)
             if failed:
                 return False
             variable_stack.open_scope('build', self.variables)
