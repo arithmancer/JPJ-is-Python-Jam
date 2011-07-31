@@ -24,7 +24,7 @@ class Target:
         self.bind_result = None
         self.build_dependancy_list =[]
         self.binding = False
-        self.built = False
+        self.dirty = False
         self.attempted = False
         self.updated = False
         self.exists = False
@@ -144,8 +144,8 @@ class Target:
                 build_depends.extend(depends.bind(rebuild, variable_stack, rule_dictionary, stat, timestamp, debug_options, level + 1))
 
             for target in build_depends:
-                if (not target.built) or ((test_timestamp != None) and (target.timestamp != None) and (timestamp < target.timestamp)):
-                    if not target.built:
+                if target.dirty or ((test_timestamp != None) and (target.timestamp != None) and (timestamp < target.timestamp)):
+                    if target.dirty:
                         newer.append(target.location+'*')
                     else:
                         newer.append(target.location)
@@ -165,7 +165,7 @@ class Target:
             self.build_dependancy_list = build_depends
             self.binding = False
             self.exists = exists
-            self.built = not dirty
+            self.dirty = dirty
 
             if debug_options['make tree']:
                 flag = ' '
@@ -196,11 +196,11 @@ class Target:
         return bind_result
 
     def build(self, variable_stack, target_tree, output_file, debug_options):
-        if (not self.built) and (not self.attempted):
+        if self.dirty and (not self.attempted):
             self.attempted = True
             failed = False
             for depends in self.build_dependancy_list:
-                if not depends.build(variable_stack, target_tree, output_file, debug_options):
+                if depends.build(variable_stack, target_tree, output_file, debug_options):
                     failed = True
                     if self.actions_list:
                         print('...skipped', self.bind_result[0].location, 'for lack of', depends.bind_result[0].location)
@@ -263,10 +263,10 @@ class Target:
             if failed:
                 self.failed = True
             else:
-                self.built = True
+                self.dirty  = False
                 self.exists = True
 
-        return self.built
+        return self.dirty
 
     def dump(self, name, show_variables):
         print(name,self.bind_result)
@@ -296,7 +296,7 @@ class TargetTree(dict):
                 count += 1
                 if t.failed:
                     failed += 1
-                elif (not t.built) and t.actions_list:
+                elif t.dirty and t.actions_list:
                     updating += 1
                 if t.exists and t.temporary:
                     temporary += 1
