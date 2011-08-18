@@ -1,0 +1,38 @@
+JPJ is Python Jam
+Copyright (C) 2011 Jonathan James except as noted below.
+
+JPJ is a reimplementation of FT Jam in Python 3. FT Jam can be found here:
+
+http://www.freetype.org/jam/index.html
+
+FT Jam itself an "enhanced" version of Perforce Jam which can be found here:
+
+http://www.perforce.com/documentation/jam.html
+
+Perforce Jam and FT Jam are both distributed with the following license:
+
+*   /+\
+*   +\	Copyright 1993-2002 Christopher Seiwald and Perforce Software, Inc.
+*   \+/
+*
+*   This file is part of jam.
+*
+*   License is hereby granted to use this software and distribute it
+*   freely, as long as this copyright notice is retained and modifications
+*   are clearly marked.
+*
+*   ALL WARRANTIES ARE HEREBY DISCLAIMED.
+
+This license also applies to JPJ.
+
+JPJ is a reimplementation rather than a port so the only file in common with
+the earlier versions is Jambase (the description of the default rules in the Jam
+scripting language). However, the source of FT Jam was used as a reference for
+writing JPJ, in particular path.py.
+
+JPJ is currently in a pre-alpha state, known issues include:
+
+* No installer
+* The -j option is not yet implemented
+* The numbered -d debug options are not implemented
+* Actions building multiple targets will be run more than once

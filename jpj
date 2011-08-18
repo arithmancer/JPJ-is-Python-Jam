@@ -1,6 +1,8 @@
 #! /usr/bin/env python3
 
 # JPJ is Python Jam
+# Copyright (C) 2011 Jonathan James
+# See README for license
 
 if __name__ == "__main__":
    import jam

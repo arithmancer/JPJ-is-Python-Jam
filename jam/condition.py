@@ -1,3 +1,11 @@
+"""
+condition.py
+part of 'JPJ is Python Jam'
+Copyright (C) 2011 Jonathan James
+See README for license
+--------------------------------------------------------------------------------
+"""
+
 import jam.exceptions
 import jam.parse
 

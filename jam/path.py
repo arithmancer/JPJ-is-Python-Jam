@@ -1,3 +1,10 @@
+"""
+path.py
+part of 'JPJ is Python Jam'
+See README for license
+--------------------------------------------------------------------------------
+"""
+
 import os.path
 
 import jam.exceptions

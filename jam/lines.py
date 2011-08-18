@@ -1,5 +1,8 @@
 """
 lines.py or 'How I learned to stop worrying and love iterators'
+part of 'JPJ is Python Jam'
+Copyright (C) 2011 Jonathan James
+See README for license
 --------------------------------------------------------------------------------
 Since iterators are supposed to be the heart of python it makes sense that they
 be the heart of pjam. Well maybe not the heart, that's probably the godawful if

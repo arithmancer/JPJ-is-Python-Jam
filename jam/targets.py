@@ -1,3 +1,11 @@
+"""
+targets.py
+part of 'JPJ is Python Jam'
+Copyright (C) 2011 Jonathan James
+See README for license
+--------------------------------------------------------------------------------
+"""
+
 import re
 import subprocess
 import time
@@ -22,7 +30,7 @@ class Target:
         self.location = None
         self.timestamp = None
         self.bind_result = None
-        self.build_dependancy_list =[]
+        self.build_dependancy_list = []
         self.binding = False
         self.dirty = False
         self.attempted = False

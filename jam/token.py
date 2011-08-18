@@ -1,3 +1,11 @@
+"""
+token.py
+part of 'JPJ is Python Jam'
+Copyright (C) 2011 Jonathan James
+See README for license
+--------------------------------------------------------------------------------
+"""
+
 import re
 
 import jam.exceptions
