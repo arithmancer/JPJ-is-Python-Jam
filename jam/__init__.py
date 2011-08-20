@@ -138,8 +138,12 @@ def main():
         target_tree = jam.targets.TargetTree()
         rule_dictionary = jam.rules.Rules(target_tree, variable_stack, debug_options)
 
+        # Parsing Phase
+
         for jambase in parameters['f']:
             jam.parse.parse(lines.Jamfile(jambase), variable_stack, target_tree, rule_dictionary)
+
+        # Binding Phase
 
         target_tree.bind(target_map, variable_stack, rule_dictionary, debug_options)
 
@@ -151,10 +155,18 @@ def main():
         if debug_options['summary'] and updating:
             print('...updating', updating, 'target(s)...')
 
+        """
+        Call target.bind again to find targets which aren't dependancies but
+        which still need to be located. Most often used for clean. 'Real' jam
+        calls bind during the updating phase to acheive the same effect.
+        """ 
+
         debug_options['causes']       = False
         debug_options['dependancies'] = False
         debug_options['make tree']    = False
         target_tree.bind({'all': False}, None, None, debug_options)
+
+        # Building Phase
 
         output_file = None
         if parameters['o']:

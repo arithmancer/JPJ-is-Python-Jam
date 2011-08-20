@@ -5,7 +5,7 @@ Copyright (C) 2011 Jonathan James
 See README for license
 --------------------------------------------------------------------------------
 Since iterators are supposed to be the heart of python it makes sense that they
-be the heart of pjam. Well maybe not the heart, that's probably the godawful if
+be the heart of jpj. Well maybe not the heart, that's probably the godawful if
 statement in parse.py. Possibly the lungs then or maybe the kidneys...
 
 Every file and every block enclosed by braces gets its own iterator. This is

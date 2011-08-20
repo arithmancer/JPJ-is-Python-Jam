@@ -1,5 +1,5 @@
 """
-parse.py
+parse.py or 'I've written BASIC programs better than this'
 part of 'JPJ is Python Jam'
 Copyright (C) 2011 Jonathan James
 See README for license
@@ -11,6 +11,13 @@ import jam.exceptions
 import jam.lines
 
 def get_block(block):
+    """
+    Return the lines enclosed by a corresponding pair of braces. Used to 
+    initialise the line iterators defined in lines.py
+    It is designed to be called when the openning brace has already been parsed.
+    It does not return the final closing brace
+    """
+
     if block == None:
         raise jam.exceptions.JamSyntaxError('{} inside []')
     indent = 1
@@ -28,10 +35,23 @@ def get_block(block):
             else:
                 sub_block.append(line)
     except StopIteration:
+        # raised by next(block) if there are no more lines in block
         raise jam.exceptions.JamSyntaxError
     return sub_block
 
 def parse_line(line, block, variable_stack, target_tree, rules):
+    """
+    'The horror, the horror'
+    The main pase function. This should almost certainly be implemented in a
+    more structured and logical fashion. For now these if statements will do.
+    Original Jam defines a grammer using YACC (BNF) syntax. It might be
+    interesting to write a parser that uses jamgram.yy as input (or use the PLY 
+    module).
+    """
+
+    # First process else statements. In particular skip clauses for which the
+    # corresponding if condition has evaluated as true.
+
     if line[0] == 'else':
         if block == None:
             raise jam.exceptions.JamSyntaxError('else inside []')
@@ -49,6 +69,9 @@ def parse_line(line, block, variable_stack, target_tree, rules):
     elif block != None:
         block['else'] = None
 
+    # Next deal with on statements since the rest of the line should be
+    # processed as if on wasn't there but with slightly different variables
+
     on_target = False
     if line[0] == 'on':
         targets = None
@@ -62,15 +85,28 @@ def parse_line(line, block, variable_stack, target_tree, rules):
             targets = line.variable_substitutions(variable_stack, 1, 2)
         variable_stack.open_scope('on', target_tree.on(targets)) 
         line = line[right + 1:]
-        on_target = True
+        on_target = True # only used to close the 'on' variable scope
 
     if line[0] not in ('if', 'while'):
+        """
+        the __call__ methoed of Condition (see condition.py) calls expand_rules
+        and since the result can (and should) change between iterations of a
+        while loop, it should not be called here. There's no reason not expand
+        an if condition but since expand_rules will be called again it seems
+        less wasteful not to.
+        """
         line = expand_rules(line, variable_stack, target_tree, rules)
 
     result = []
     if block == None:
+        # lines which have originated inside square brackets will not end with a
+        # semicolon add one to make parsing easier
         line.append(';')
     length = len(line)
+
+    # main parsing logic
+    # first look at the last token on the line
+
     if line[-1] == '{':
         sub_block = get_block(block)
         scope = None
@@ -105,6 +141,7 @@ def parse_line(line, block, variable_stack, target_tree, rules):
                 block.interrupt(jam_interrupt.name, jam_interrupt.values)
     elif line[-1] == ';':
         if block == None:
+            # remove the added semicolon
             line.pop(-1)
         if (length == 2) and (line[0] in ('break', 'continue')):
             block.interrupt(line[0], [])
@@ -156,6 +193,9 @@ def parse_line(line, block, variable_stack, target_tree, rules):
                     arguments.append(line.variable_substitutions(variable_stack, start, length - 1))
                 result = rules(rule_names, arguments)
     else:
+        # lines can end in either at a semicolon, an open brace, a close brace
+        # or an EOF (see lines.Jamfile).
+        # close braces should be discarded by get_block (above)
         raise jam.exceptions.JamSyntaxError
 
     if on_target:
@@ -164,6 +204,12 @@ def parse_line(line, block, variable_stack, target_tree, rules):
     return result
 
 def expand_rules(sequence, variable_stack, target_tree, rules):
+    """
+    Deal with the square brackets syntax. Treat anything between a corresponding
+    pair of square brackets as a line and parse it. Replace the square brackets
+    and what they enclose with the result of the parsing.
+    """
+
     pair = sequence.innermost_enclosed_sequence('[', ']')
     if pair == None:
         return sequence[:]
@@ -174,11 +220,18 @@ def expand_rules(sequence, variable_stack, target_tree, rules):
     return sequence
 
 def parse(block, variable_stack, target_tree, rules):
+    """
+    Loop over the lines in block parsing each one in turn. Pass JamInterrupt
+    exceptions on to the outer block. See lines.py for details.
+    """
+
     try:
         for line in block:
             parse_line(line, block, variable_stack, target_tree, rules)
-    #except jam.exceptions.JamSyntaxError as syntax:
-    #    raise jam.exceptions.JamUserExit('Syntax Error in',line[0].filename,'on line',line[0].line_number,'\n', ' '.join(line))
+    except jam.exceptions.JamUserExit as user:
+        raise user
+    except jam.exceptions.JamSyntaxError as syntax:
+        raise jam.exceptions.JamUserExit('Syntax Error in',line[0].filename,'on line',line[0].line_number,'\n', ' '.join(line))
     except jam.exceptions.JamInterrupt as jam_interrupt:
         raise jam_interrupt
     except Exception as exception:

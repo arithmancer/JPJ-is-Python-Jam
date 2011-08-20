@@ -1,9 +1,19 @@
 """
-sequence.py
+sequence.py or 'Magnolia is the average colour of the Universe'
 part of 'JPJ is Python Jam'
 Copyright (C) 2011 Jonathan James
 See README for license
 --------------------------------------------------------------------------------
+Hopefully these decarotions aren't quite as mundane as the Universe.
+
+The jam_sequence is intended to decorate subclasses of sequence types. It equips 
+the class with two methods for handling nested bracket-like elements: allowing 
+them to be processed outside in or inside out. It also redefines __getitem__ so
+that slices will have the class rather than the superclass type. Finally, it 
+takes a list of superclass methods which return a superclass type to be 
+redefined to return class type instead.
+
+This decarotor has most use in token.py.
 """
 
 def jam_sequence(*arguments):

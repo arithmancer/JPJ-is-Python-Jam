@@ -1,5 +1,5 @@
 """
-rules.py
+rules.py or 'Dictionary Corner'
 part of 'JPJ is Python Jam'
 Copyright (C) 2011 Jonathan James
 See README for license

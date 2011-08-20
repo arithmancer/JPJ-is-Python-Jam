@@ -1,5 +1,7 @@
 """
 exceptions.py
+part of 'JPJ is Python Jam'
+See README for license
 --------------------------------------------------------------------------------
 I'm not sure why the exceptions have their own file. They're just antisocial I
 guess. 
