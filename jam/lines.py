@@ -73,10 +73,21 @@ class Jamfile(Lines):
         line = jam.token.TokenList()
         t = ''
         line_number = 0
-        counter = re.compile(r'\\\\|\\"|"')
-        tokenize = re.compile(r'(?P<token>(?P<quote>")?(?(quote)(?:\\\\|\\"|[^"])*"|(?:\\\\|\\"|\\\s|[^"\s])+))(?P<white>\s*)')
-        quoted_replace = re.compile(r'\\["\\]')
-        unquoted_replace = re.compile(r'\\["\\\s]')
+        counter = re.compile(r'\\\\|\\"|"') # find unescaped "
+        tokenize = re.compile(r'''
+          (?P<token>
+            (?P<quote>")?               # 0 or 1 "
+            (?(quote)                   # if " present
+              (?:\\\\|\\"|[^"])*"       # read until unescaped "
+              |                         # else
+              (?:\\\\|\\"|\\\s|[^"\s])+ # read until unescaped whitespace or "
+            )                           # endif
+          )                             # end of <token>
+          (?P<white>\s*)                # trailing whitespace
+                              ''',
+                              re.VERBOSE)
+        quoted_replace = re.compile(r'\\["\\]') # escaped characters if "
+        unquoted_replace = re.compile(r'\\["\\\s]') # escaped characters if not
         def replace(match_object):
             return match_object.group(0)[1:]
         with open(path, mode='r', encoding='utf-8') as f:
