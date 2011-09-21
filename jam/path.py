@@ -57,6 +57,7 @@ class JamPath:
                 if self.edit_dictionary[key] != None:
                     raise jam.exceptions.JamSyntaxError
                 self.edit_dictionary[key] = value
+                self.path_mask[key] = True
                 if key not in ('E', 'J'):
                     self.active_path = True
 

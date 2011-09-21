@@ -38,7 +38,7 @@ class Token(str):
         str.__init__(self)
 
     def variable_substitutions(self, variables):
-        sub_tokenize = re.compile(r'(\$\(|\)|\[|\]|:[BDEGJMRS]=|:[BDEGJLMPSU]*)')
+        sub_tokenize = re.compile(r'(\$\(|\)|\[|\]|:[BDEGJLMPSU]*?[BDEGJMRS]=|:[BDEGJLMPSU]+)')
         sub_tokens = jam.sequence.JamList(sub_tokenize.split(self))
         sub_tokens_list = [ sub_tokens ]
         expanded_sub_tokens_list = []
@@ -76,12 +76,9 @@ class Token(str):
                                 raise jam.exceptions.JamSyntaxError
                         elif sub_tokens[index][0] == ':':
                             if sub_tokens[index][-1] == '=':
-                                if len(sub_tokens[index]) > 3:
-                                    raise jam.exceptions.JamSyntaxError
-                                jam_path[sub_tokens[index][1]] = sub_tokens[index + 1]
-                            else:
-                                if (len(sub_tokens[index]) == 1) or sub_tokens[index + 1]:
-                                    raise jam.exceptions.JamSyntaxError
+                                jam_path[sub_tokens[index][-2]] = sub_tokens[index + 1]
+                                sub_tokens[index] = sub_tokens[index][0:-2]
+                            if len(sub_tokens[index]) > 1:
                                 for c in sub_tokens[index][1:]:
                                     jam_path[c] = None
                     if in_range:
