@@ -15,9 +15,8 @@ class Condition:
 
     def __call__(self, variable_stack, target_tree, rules):
         working = jam.parse.expand_rules(self.condition, variable_stack, target_tree, rules)
-        if (working[0] != '(') or (working[-1] != ')'):
-            working.insert(0, '(')
-            working.append(')')
+        working.insert(0, '(')
+        working.append(')')
         while working:
             (left, right) = working.innermost_enclosed_sequence('(', ')')
             compare = -1
