@@ -225,16 +225,17 @@ def parse(block, variable_stack, target_tree, rules):
     exceptions on to the outer block. See lines.py for details.
     """
 
-    try:
-        for line in block:
+    for line in block:
+        try:
             parse_line(line, block, variable_stack, target_tree, rules)
-    except jam.exceptions.JamUserExit as user:
-        raise user
-    except jam.exceptions.JamSyntaxError as syntax:
-        raise jam.exceptions.JamUserExit('Syntax Error in',line[0].filename,'on line',line[0].line_number,'\n', ' '.join(line))
-    except jam.exceptions.JamInterrupt as jam_interrupt:
-        raise jam_interrupt
-    except Exception as exception:
-        print(line)
-        raise exception
+        except jam.exceptions.JamUserExit as user:
+            raise user
+        except jam.exceptions.JamSyntaxError as syntax:
+            print('Syntax Error', ' '.join(syntax.arguments), 'in',line[0].filename,'on line',line[0].line_number)
+            print(line)
+        except jam.exceptions.JamInterrupt as jam_interrupt:
+            raise jam_interrupt
+        except Exception as exception:
+            print(line)
+            raise exception
 

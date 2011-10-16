@@ -98,7 +98,7 @@ class Jamfile(Lines):
                         text += next(f)
                         line_number += 1
                 except StopIteration:
-                    raise jam.exceptions.JamSyntaxError(text)
+                    raise jam.exceptions.JamSyntaxError('Quotes not terminated before EOF')
                 token_iterator = tokenize.finditer(text)
                 for m in token_iterator:
                     if m.group('quote'):

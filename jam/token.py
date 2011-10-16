@@ -59,13 +59,13 @@ class Token(str):
                     for index in range(left + 2, right, 2):
                         if sub_tokens[index] == ']':
                             if (not in_range) or sub_tokens[index + 1]:
-                                raise jam.exceptions.JamSyntaxError
+                                raise jam.exceptions.JamSyntaxError('Malformed variable (misplaced ])')
                             in_range = False
                         elif sub_tokens[index] == '[':
                             in_range = True
                             r = sub_tokens[index + 1].partition('-')
                             if not r[0].isdigit():
-                                raise jam.exceptions.JamSyntaxError
+                                raise jam.exceptions.JamSyntaxError('Malformed variable (bad range)')
                             if not r[1]:
                                 value = value[int(r[0]) - 1:int(r[0])]
                             elif not r[2]:
@@ -73,7 +73,7 @@ class Token(str):
                             elif r[2].isdigit():
                                 value = value[int(r[0]) - 1:int(r[2])]
                             else:
-                                raise jam.exceptions.JamSyntaxError
+                                raise jam.exceptions.JamSyntaxError('Malformed variable (bad range)')
                         elif sub_tokens[index][0] == ':':
                             if sub_tokens[index][-1] == '=':
                                 jam_path[sub_tokens[index][-2]] = sub_tokens[index + 1]
@@ -82,7 +82,7 @@ class Token(str):
                                 for c in sub_tokens[index][1:]:
                                     jam_path[c] = None
                     if in_range:
-                        raise jam.exceptions.JamSyntaxError
+                        raise jam.exceptions.JamSyntaxError('Malformed variable (missing ])')
                     value = jam_path(value)
                 expanded_sub_tokens_list.extend([ sub_tokens[:left - 1] + [ sub_tokens[left - 1] + str(t) + sub_tokens[right + 1] ] + sub_tokens[right + 2:] for t in value ])
             sub_tokens_list = expanded_sub_tokens_list
@@ -101,6 +101,16 @@ class TokenList(list):
         else:
             token = Token(arg, **args)
         return token
+
+    def __str__(self):
+        s = ''
+        for t in self:
+            s += t
+            if t.trailing_whitespace:
+                s += t.trailing_whitespace
+            else:
+                s += ' '
+        return s
 
     def append(self, arg, **args):
         list.append(self, TokenList._make_token(arg, **args))

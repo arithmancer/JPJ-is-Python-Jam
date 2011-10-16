@@ -18,7 +18,10 @@ class Condition:
         working.insert(0, '(')
         working.append(')')
         while working:
-            (left, right) = working.innermost_enclosed_sequence('(', ')')
+            pair = working.innermost_enclosed_sequence('(', ')')
+            if pair == None:
+                raise jam.exceptions.JamSyntaxError('Malformed condition (mismatched parenthesis)')
+            (left, right) = pair
             compare = -1
             negate = False
             value = False
@@ -64,10 +67,10 @@ class Condition:
                         negate = not negate
                         l += 1
                     else:
-                        raise jam.exceptions.JamSyntaxError
+                        raise jam.exceptions.JamSyntaxError('Malformed condition (misplaced negation)')
                 elif working[index] in ('=', '!=', '<', '<=', '>', '>=', 'in'):
                     if compare != -1:
-                        raise jam.exceptions.JamSyntaxError
+                        raise jam.exceptions.JamSyntaxError('Malformed condition (too many compairsons)')
                     compare = index
             working[right] = value
             del working[left:right]
